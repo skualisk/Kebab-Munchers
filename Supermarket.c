@@ -1,18 +1,25 @@
 /*Supermarket management system, by Aarron Dcruz 2661123, Anshuman Singh 2661126, 
   Yankit Gupta 2661144 and Uneeth Singh 2661183*/
 #import <stdio.h>
-
+#import <string.h>
 struct Cart //Bro struct is like a reusable variable thing
 {
   char pname[50];
   float price;
   float quan;
+  
 }
-
+struct Product{
+    int ASid;
+    char ASname[50];
+    float ASprice;
+    int ASquantity;
+}
 void AddCart();
 
 void RemoveCart();
 
+void ASaddProduct();
 int main()
 {
 
@@ -72,4 +79,58 @@ void RemoveCart()
     printf("----------------- ITEM DELETED FROM CART -----------------");
   remove ("Cart.csv");
   rename ("Temp.csv", "Cart.csv");
+}
+void ASaddProduct(){
+	struct Product ASproduct;
+	FILE*ASfile;
+	
+	ASfile=fopen("products.txt",a);//opening file in apppppeeeennnddd
+	if(ASfile==NULL){
+		printf("ERROR!!\n");
+		return;
+	}
+	//taking product
+	printf("ENTER PRODUCT ID:");
+	scanf("%d",&ASproduct.ASid);
+	printf("ENTER PRODUCT NAME:");
+	scanf("%d",&ASproduct.ASname);
+	printf("ENTER PRODUCT PRICE:");
+	scanf("%d",&ASproduct.ASprice);
+	printf("ENTER PRODUCT QUANTITY:");
+	scanf("%d",&ASproduct.ASquantity);
+	fprintf(ASfile,"%d %s %.2f %d\n",ASproduct.ASid,ASproduct.ASname,ASproduct.ASprice,ASproduct.ASquantity);
+	
+	fclose(ASfile);
+	printf("\n PRODUCT ADDED !\n");
+	
+}   
+void ASdisplayProducts() {
+    struct Product ASproduct;
+    FILE *ASfile;
+
+    // Open file in read mode
+    ASfile = fopen("products.txt", "r");
+    if (ASfile == NULL) {
+        printf(" Error!\n");
+        return;
+    }
+
+    printf("\n--- Product List ---\n");
+    printf("ID\tName\tPrice\tQuantity\n");
+    printf("---------------------------------\n");
+
+    // Read each product line by line
+    while (fscanf(ASfile, "%d %s %f %d",
+                  &ASproduct.ASid,
+                  ASproduct.ASname,
+                  &ASproduct.ASprice,
+                  &ASproduct.ASquantity) != EOF) {
+        printf("%d\t%s\t%.2f\t%d\n",
+               ASproduct.ASid,
+               ASproduct.ASname,
+               ASproduct.ASprice,
+               ASproduct.ASquantity);
+    }
+
+    fclose(ASfile);
 }
