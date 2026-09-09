@@ -16,6 +16,8 @@ struct Product{
     int ASquantity;
 }
 void AddCart();
+void ASsearchProduct();
+void ASapplyDiscount();
 
 void RemoveCart();
 
@@ -134,3 +136,88 @@ void ASdisplayProducts() {
 
     fclose(ASfile);
 }
+
+void ASsearchProduct() {
+    struct Product ASproduct;
+    FILE *ASfile;
+    int ASsearchId;
+    char ASsearchName[50];
+    int ASfound = 0;
+    int ASchoice;
+
+    ASfile = fopen("products.csv", "r");
+    if (ASfile == NULL) {
+        printf("? Error opening file!\n");
+        return;
+    }
+
+    printf("Search by:\n1. Product ID\n2. Product Name\nEnter choice: ");
+    scanf("%d", &ASchoice);
+
+    if (ASchoice == 1) {
+        printf("Enter Product ID: ");
+        scanf("%d", &ASsearchId);
+
+        while (fscanf(ASfile, "%d,%49[^,],%f,%d",
+                      &ASproduct.ASid,
+                      ASproduct.ASname,
+                      &ASproduct.ASprice,
+                      &ASproduct.ASquantity) != EOF) {
+            if (ASproduct.ASid == ASsearchId) {
+                printf("\n? Product Found!\n");
+                printf("ID: %d | Name: %s | Price: %.2f | Quantity: %d\n",
+                       ASproduct.ASid, ASproduct.ASname,
+                       ASproduct.ASprice, ASproduct.ASquantity);
+                ASfound = 1;
+                break;
+            }
+        }
+    } else if (ASchoice == 2) {
+        printf("Enter Product Name: ");
+        scanf("%s", ASsearchName);
+
+        while (fscanf(ASfile, "%d,%49[^,],%f,%d",
+                      &ASproduct.ASid,
+                      ASproduct.ASname,
+                      &ASproduct.ASprice,
+                      &ASproduct.ASquantity) != EOF) {
+            if (strcmp(ASproduct.ASname, ASsearchName) == 0) {
+                printf("\n? Product Found!\n");
+                printf("ID: %d | Name: %s | Price: %.2f | Quantity: %d\n",
+                       ASproduct.ASid, ASproduct.ASname,
+                       ASproduct.ASprice, ASproduct.ASquantity);
+                ASfound = 1;
+                break;
+            }
+        }
+    }
+
+    if (!ASfound) {
+        printf("\n? Product Not Found!\n");
+    }
+
+    fclose(ASfile);
+}
+
+
+
+float ASapplyDiscount(float AStotal) {
+    float ASdiscount = 0.0;
+
+    if (AStotal > 1000) {
+        ASdiscount = AStotal * 0.10;   // 10% discount
+    } else if (AStotal > 500) {
+        ASdiscount = AStotal * 0.05;   // 5% discount
+    }
+
+    float ASfinalAmount = AStotal - ASdiscount;
+
+    printf("\n--- Discount Applied ---\n");
+    printf("Original Total: %.2f\n", AStotal);
+    printf("Discount: %.2f\n", ASdiscount);
+    printf("Final Amount: %.2f\n", ASfinalAmount);
+
+    return ASfinalAmount;
+}
+
+
