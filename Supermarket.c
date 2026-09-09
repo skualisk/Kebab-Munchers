@@ -84,7 +84,7 @@ void ASaddProduct(){
 	struct Product ASproduct;
 	FILE*ASfile;
 	
-	ASfile=fopen("products.txt",a);//opening file in apppppeeeennnddd
+	ASfile=fopen("products.csv",a);//opening file in apppppeeeennnddd
 	if(ASfile==NULL){
 		printf("ERROR!!\n");
 		return;
@@ -109,7 +109,7 @@ void ASdisplayProducts() {
     FILE *ASfile;
 
     // Open file in read mode
-    ASfile = fopen("products.txt", "r");
+    ASfile = fopen("products.csv", "r");
     if (ASfile == NULL) {
         printf(" Error!\n");
         return;
