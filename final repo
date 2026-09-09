@@ -1,0 +1,358 @@
+/* Supermarket management system
+   By Aarron Dcruz 2661123, Anshuman Singh 2661126,
+   Yankit Gupta 2661144 and Uneeth Singh 2661183 */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+struct Cart {
+    char pname[50];
+    float price;
+    float quan;
+};
+
+struct Product {
+    int ASid;
+    char ASname[50];
+    float ASprice;
+    int ASquantity;
+};
+
+// Function declarations
+void AddCart();
+void RemoveCart();
+void ASaddProduct();
+void ASdisplayProducts();
+void ASsearchProduct();
+float AScalculateTotal();
+float ASapplyDiscount(float AStotal);
+float AScalculateTax(float AStotal);
+
+int main() {
+    int roleChoice, option;
+    float total, discountedTotal, finalAmount;
+
+    printf("\n===== SUPERMARKET BILLING SYSTEM =====\n");
+    printf("1. Customer\n");
+    printf("2. Owner\n");
+    printf("Enter your role: ");
+    scanf("%d", &roleChoice);
+
+    if (roleChoice == 1) {   // CUSTOMER MODE
+        do {
+            printf("\n--- CUSTOMER MENU ---\n");
+            printf("1. View Products\n");
+            printf("2. Search Product\n");
+            printf("3. Add Item to Cart\n");
+            printf("4. Remove Item from Cart\n");
+            printf("5. View Cart & Calculate Bill\n");
+            printf("6. Exit\n");
+            printf("Enter choice: ");
+            scanf("%d", &option);
+
+            switch(option) {
+                case 1: ASdisplayProducts(); break;
+                case 2: ASsearchProduct(); break;
+                case 3: AddCart(); break;
+                case 4: RemoveCart(); break;
+                case 5:
+                    total = AScalculateTotal();
+                    discountedTotal = ASapplyDiscount(total);
+                    finalAmount = AScalculateTax(discountedTotal);
+                    printf("\n=== FINAL BILL ===\n");
+                    printf("Subtotal: %.2f\n", total);
+                    printf("After Discount: %.2f\n", discountedTotal);
+                    printf("Final Amount (with GST): %.2f\n", finalAmount);
+                    break;
+                case 6: printf("Exiting Customer Menu...\n"); break;
+                default: printf("Invalid choice!\n");
+            }
+        } while(option != 6);
+
+    } else if (roleChoice == 2) {   // OWNER MODE
+        do {
+            printf("\n--- OWNER MENU ---\n");
+            printf("1. Add Product to Inventory\n");
+            printf("2. View Products\n");
+            printf("3. Exit\n");
+            printf("Enter choice: ");
+            scanf("%d", &option);
+
+            switch(option) {
+                case 1: ASaddProduct(); break;
+                case 2: ASdisplayProducts(); break;
+                case 3: printf("Exiting Owner Menu...\n"); break;
+                default: printf("Invalid choice!\n");
+            }
+        } while(option != 3);
+
+    } else {
+        printf("? Invalid role selected!\n");
+    }
+
+    return 0;
+}
+
+// ---------------- CUSTOMER FUNCTIONS ----------------
+
+void AddCart()
+{
+    struct Cart Ad;
+    struct Product P;
+    FILE *pf = fopen("products.csv", "r");
+    FILE *cf = fopen("Cart.csv", "a");
+
+    if (pf == NULL || cf == NULL) {
+        printf("Error opening file!\n");
+        return;
+    }
+
+    printf("Enter Product Name: ");
+    scanf("%s", Ad.pname);
+    printf("Enter Quantity of Product: ");
+    scanf("%f", &Ad.quan);
+
+    int found = 0;
+    while (fscanf(pf, "%d,%49[^,],%f,%d",
+                  &P.ASid, P.ASname, &P.ASprice, &P.ASquantity) != EOF) {
+        if (strcmp(P.ASname, Ad.pname) == 0) {
+            Ad.price = P.ASprice;   // auto fetch price
+            found = 1;
+            break;
+        }
+    }
+
+    if (found) {
+        fprintf(cf, "%s,%.2f,%.2f\n", Ad.pname, Ad.price, Ad.quan);
+        printf("-------------- ITEM ADDED SUCCESSFULLY --------------\n");
+    } else {
+        printf("? Product not found in inventory!\n");
+    }
+
+    fclose(pf);
+    fclose(cf);
+}
+
+void RemoveCart() {
+    char IName[50];
+    printf("Enter Item Name to be removed:\t");
+    scanf("%s", IName);
+
+    FILE *fde = fopen("Cart.csv", "r");
+    FILE *ftemp = fopen("Temp.csv", "w");
+    char line[256];
+    int found = 0;
+
+    while (fgets(line, sizeof(line), fde) != NULL) {
+        line[strcspn(line, "\n")] = 0;
+        char *name = strtok(line, ",");
+        char *price = strtok(NULL, ",");
+        char *quan = strtok(NULL, ",");
+
+        if (strcmp(IName, name) == 0) {
+            found = 1;
+            continue; // skip writing this line
+        }
+        fprintf(ftemp, "%s,%s,%s\n", name, price, quan);
+    }
+
+    fclose(fde);
+    fclose(ftemp);
+
+    if (found == 0)
+        printf("Item Not Found\n");
+    else
+        printf("----------------- ITEM DELETED FROM CART -----------------\n");
+
+    remove("Cart.csv");
+    rename("Temp.csv", "Cart.csv");
+}
+
+float AScalculateTotal() {
+    struct Cart ASitem;
+    FILE *ASfile;
+    float AStotal = 0.0;
+
+    ASfile = fopen("Cart.csv", "r");
+    if (ASfile == NULL) {
+        printf("? Cart file not found!\n");
+        exit(0);
+    }
+
+    printf("\n--- Cart Items ---\n");
+    printf("Name\tPrice\tQuantity\tSubtotal\n");
+    printf("-----------------------------------------\n");
+
+    while (fscanf(ASfile, "%49[^,],%f,%f\n",
+                  ASitem.pname,
+                  &ASitem.price,
+                  &ASitem.quan) != EOF) {
+        float ASsubtotal = ASitem.price * ASitem.quan;
+        printf("%s\t%.2f\t%.2f\t%.2f\n",
+               ASitem.pname, ASitem.price, ASitem.quan, ASsubtotal);
+        AStotal += ASsubtotal;
+    }
+
+    fclose(ASfile);
+
+    printf("\nTotal Amount: %.2f\n", AStotal);
+    return AStotal;
+}
+
+float ASapplyDiscount(float AStotal) {
+    float ASdiscount = 0.0;
+
+    if (AStotal > 1000) {
+        ASdiscount = AStotal * 0.10;   // 10% discount
+    } else if (AStotal > 500) {
+        ASdiscount = AStotal * 0.05;   // 5% discount
+    }
+
+    float ASfinalAmount = AStotal - ASdiscount;
+
+    printf("\n--- Discount Applied ---\n");
+    printf("Original Total: %.2f\n", AStotal);
+    printf("Discount: %.2f\n", ASdiscount);
+    printf("After Discount: %.2f\n", ASfinalAmount);
+
+    return ASfinalAmount;
+}
+
+float AScalculateTax(float AStotal) {
+    float AStaxRate = 0.18;   // 18% GST
+    float AStaxAmount = AStotal * AStaxRate;
+    float ASfinalAmount = AStotal + AStaxAmount;
+
+    printf("\n--- Tax Calculation ---\n");
+    printf("Subtotal (after discount): %.2f\n", AStotal);
+    printf("GST (18%%): %.2f\n", AStaxAmount);
+    printf("Final Amount (with tax): %.2f\n", ASfinalAmount);
+
+    return ASfinalAmount;
+}
+
+// ---------------- OWNER FUNCTIONS ----------------
+
+// ---------------- OWNER FUNCTIONS ----------------
+
+void ASaddProduct() {
+    struct Product ASproduct;
+    FILE *ASfile;
+
+    ASfile = fopen("products.csv", "a");
+    if (ASfile == NULL) {
+        printf("ERROR!!\n");
+        return;
+    }
+
+    printf("ENTER PRODUCT ID: ");
+    scanf("%d", &ASproduct.ASid);
+    printf("ENTER PRODUCT NAME: ");
+    scanf("%s", ASproduct.ASname);
+    printf("ENTER PRODUCT PRICE: ");
+    scanf("%f", &ASproduct.ASprice);
+    printf("ENTER PRODUCT QUANTITY: ");
+    scanf("%d", &ASproduct.ASquantity);
+
+    // Write with commas so search/display works consistently
+    fprintf(ASfile, "%d,%s,%.2f,%d\n",
+            ASproduct.ASid,
+            ASproduct.ASname,
+            ASproduct.ASprice,
+            ASproduct.ASquantity);
+
+    fclose(ASfile);
+    printf("\n PRODUCT ADDED !\n");
+}
+
+void ASdisplayProducts() {
+    struct Product ASproduct;
+    FILE *ASfile;
+
+    ASfile = fopen("products.csv", "r");
+    if (ASfile == NULL) {
+        printf("Error! Could not open products file.\n");
+        return;
+    }
+
+    printf("\n--- Product List ---\n");
+    printf("ID\tName\tPrice\tQuantity\n");
+    printf("---------------------------------\n");
+
+    while (fscanf(ASfile, "%d,%49[^,],%f,%d",
+                  &ASproduct.ASid,
+                  ASproduct.ASname,
+                  &ASproduct.ASprice,
+                  &ASproduct.ASquantity) != EOF) {
+        printf("%d\t%s\t%.2f\t%d\n",
+               ASproduct.ASid,
+               ASproduct.ASname,
+               ASproduct.ASprice,
+               ASproduct.ASquantity);
+    }
+
+    fclose(ASfile);
+}
+
+void ASsearchProduct() {
+    struct Product ASproduct;
+    FILE *ASfile;
+    int ASsearchId;
+    char ASsearchName[50];
+    int ASfound = 0;
+    int ASchoice;
+
+    ASfile = fopen("products.csv", "r");
+    if (ASfile == NULL) {
+        printf("Error opening products file!\n");
+        return;
+    }
+
+    printf("Search by:\n1. Product ID\n2. Product Name\nEnter choice: ");
+    scanf("%d", &ASchoice);
+
+    if (ASchoice == 1) {
+        printf("Enter Product ID: ");
+        scanf("%d", &ASsearchId);
+
+        while (fscanf(ASfile, "%d,%49[^,],%f,%d",
+                      &ASproduct.ASid,
+                      ASproduct.ASname,
+                      &ASproduct.ASprice,
+                      &ASproduct.ASquantity) != EOF) {
+            if (ASproduct.ASid == ASsearchId) {
+                printf("\n? Product Found!\n");
+                printf("ID: %d | Name: %s | Price: %.2f | Quantity: %d\n",
+                       ASproduct.ASid, ASproduct.ASname,
+                       ASproduct.ASprice, ASproduct.ASquantity);
+                ASfound = 1;
+                break;
+            }
+        }
+    } else if (ASchoice == 2) {
+        printf("Enter Product Name: ");
+        scanf("%s", ASsearchName);
+
+        while (fscanf(ASfile, "%d,%49[^,],%f,%d",
+                      &ASproduct.ASid,
+                      ASproduct.ASname,
+                      &ASproduct.ASprice,
+                      &ASproduct.ASquantity) != EOF) {
+            if (strcmp(ASproduct.ASname, ASsearchName) == 0) {
+                printf("\n? Product Found!\n");
+                printf("ID: %d | Name: %s | Price: %.2f | Quantity: %d\n",
+                       ASproduct.ASid, ASproduct.ASname,
+                       ASproduct.ASprice, ASproduct.ASquantity);
+                ASfound = 1;
+                break;
+            }
+        }
+    }
+
+    if (!ASfound) {
+        printf("\n? Product Not Found!\n");
+    }
+
+    fclose(ASfile);
+}
